@@ -1,5 +1,5 @@
 from copy import deepcopy
-from .entities import Treatment, PromptValidation, Treatmentinput
+from .entities import Treatment, PromptValidation
 
 from .validations import * 
 from .treatments import *
@@ -7,15 +7,34 @@ from .treatments import *
 class PromptValidationCenter:
 
     # A list where all PromptValidations are going to be registered
-    PromptValidations : list[PromptValidation] = []
+    PromptValidations : list[PromptValidation] = [
+            PromptValidation(name='length_validation', description='checks if the answer size is greater than 0', operation=len_test),
+            PromptValidation(name='key_equal_value_validation', description='checks if the answer is equal to the key', operation=key_test),
+            PromptValidation(name='and_validation', description='checks if the answer contains an addition mark', operation=and_test),
+            PromptValidation(name='att_validation', description='checks if the answer is equal to some processed key', operation=att_test),
+            PromptValidation(name='pronoun_validation', description='checks if there is an addition mark following a pronoun', operation=pronoun_test),
+            PromptValidation(name='entity_validation', description='checks if the answer is equal to the entity found', operation=entity_test),
+            PromptValidation(name='ignoring_validation', description='checks if the answer is ignoring some important information', operation=ignoring_test),
+            PromptValidation(name='float_validation', description='checks if the wanted value is a float value, and then discover if the model correctly find the value or only the integer part', operation=float_test),
+            PromptValidation(name='char_validation', description='checks if the answer has some noise characters', operation=char_test),
+            PromptValidation(name='in_msg_test', description='tests if the result is in the user message', operation=in_msg_test)
+    ]
 
 class TreatmentCenter:
 
     # A list where all treatments are going to be registered
-    treatments : list[Treatment] = []
+    treatments : list[Treatment] = [
+        Treatment(name='extract_entity', description='Searchs for the first noun in the user message', operation=extract_entity),
+        Treatment(name='extract_attribute', description='Gets the word following the attribute key in the message', operation=extract_attribute)
+    ]
 
     # List of treatments that are made every tive before the regular ones
-    mandatory_treatments : list[Treatment] = []
+    mandatory_treatments : list[Treatment] = [
+        Treatment(name='similarity_filter', description='This treatment gets the interception between the response from the model and the user input', operation=similarity_filter),
+        Treatment(name='entity_filter', description='This treatment gets the first interception between the response from the model and the user input. it returns a single word as response', operation=entity_filter),
+        Treatment(name='intent_filter', description='Extracts the exact intent string from the model response', operation=intent_filter),
+        Treatment(name='filter_filter', description='Searchs for an processed attribute key in the model response', operation=find_filter)
+    ]
 
     """ 
         This is suposed to store the every pipeline of treatment
@@ -33,10 +52,10 @@ class TreatmentCenter:
         }   
     """
     # mandatory treatments, regular treatments and validations
-    treatment_lines : dict[str, tuple[ list[Treatment], list[Treatment], list[PromptValidation]  ]] = {'attributes_pipeline' : ([],[],[]),
-                                                                                      'entity_pipeline' : ([], [], []),
-                                                                                      'intent_pipeline' : ([], [], []),
-                                                                                      'filter_pipeline' : ([], [], [])
+    treatment_lines : dict[str, tuple[ list[Treatment], list[Treatment], list[PromptValidation]  ]] = {'attributes_pipeline' : ([mandatory_treatments[0]],[treatments[1]],PromptValidationCenter.PromptValidations),
+                                                                                      'entity_pipeline' : ([mandatory_treatments[1]], [treatments[0]], [PromptValidationCenter.PromptValidations[0],PromptValidationCenter.PromptValidations[9]]),
+                                                                                      'intent_pipeline' : ([mandatory_treatments[2]], [], []),
+                                                                                      'filter_pipeline' : ([mandatory_treatments[3]], [], [])
                                                                                       }
     '''
     @classmethod
