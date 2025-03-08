@@ -7,7 +7,7 @@ from .treatments import *
 class PromptValidationCenter:
 
     # A list where all PromptValidations are going to be registered
-    PromptValidations : list[PromptValidation] = []
+    PromptValidations : list[PromptValidation] = [PromptValidation('len_test', len_test), PromptValidation('paragraph_test', paragraph_test)]
 
 class TreatmentCenter:
 
@@ -15,7 +15,7 @@ class TreatmentCenter:
     treatments : list[Treatment] = []
 
     # List of treatments that are made every tive before the regular ones
-    mandatory_treatments : list[Treatment] = []
+    mandatory_treatments : list[Treatment] = [Treatment('long_paragraph', single_paragraph_treatment), Treatment('short_paragraph', short_paragraph_treatment)]
 
     """ 
         This is suposed to store the every pipeline of treatment
@@ -33,10 +33,9 @@ class TreatmentCenter:
         }   
     """
     # mandatory treatments, regular treatments and validations
-    treatment_lines : dict[str, tuple[ list[Treatment], list[Treatment], list[PromptValidation]  ]] = {'attributes_pipeline' : ([],[],[]),
-                                                                                      'entity_pipeline' : ([], [], []),
-                                                                                      'intent_pipeline' : ([], [], []),
-                                                                                      'filter_pipeline' : ([], [], [])
+    treatment_lines : dict[str, tuple[ list[Treatment], list[Treatment], list[PromptValidation]  ]] = {'summary_pipeline' : ([mandatory_treatments[0]],[],[PromptValidationCenter.PromptValidations[0], PromptValidationCenter.PromptValidations[1]]),
+                                                                                      'keywords_pipeline' : ([mandatory_treatments[0]], [], [PromptValidationCenter.PromptValidations[0], PromptValidationCenter.PromptValidations[1]]),
+                                                                                      'title_pipeline' : ([mandatory_treatments[1]], [], [PromptValidationCenter.PromptValidations[0], PromptValidationCenter.PromptValidations[1]])
                                                                                       }
     '''
     @classmethod
