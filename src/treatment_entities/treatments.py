@@ -3,6 +3,7 @@ from ..utils.services import token_classification_service
 from ..utils.utils import clean_string
 
 def similarity_filter(input : Treatmentinput) -> Treatmentinput:
+    print(f"similarity {input.value}")
     value = input.value
     words = value.split(' ')
     words = list(filter(lambda x: x != '', words))
@@ -31,6 +32,22 @@ def similarity_filter(input : Treatmentinput) -> Treatmentinput:
         final_answer = ' '.join(answer_list)
     input.value = final_answer.strip()
     return input
+
+
+def clean_aux(input : Treatmentinput) -> Treatmentinput:
+    print(f"clean aux1 {input.value}")
+    if input.current_intent.lower() == 'update':
+        value = input.value.strip()
+        tokens = token_classification_service(value)
+        print(f"tokens {tokens}")
+        for t in tokens:
+            if t['entity'] == 'AUX':
+                word = t['word'] + ' '
+                value = value.replace(word, '')
+        input.value = value.strip()
+    print(f"clean aux2 {input.value}")
+    return input
+
 '''
 def request_new_answer(input : Treatmentinput) -> Treatmentinput:
 
@@ -64,6 +81,7 @@ def entity_filter(input : Treatmentinput) -> Treatmentinput:
                 candidates.append(word.strip())
     candidates_str = ' '.join(candidates)
     tokens = token_classification_service(candidates_str)
+    print(f"entity tokens: {tokens}")
 
     for token in tokens:
         if token['entity'] == 'NOUN':
@@ -84,9 +102,9 @@ def extract_entity(input : Treatmentinput) -> Treatmentinput:
 def intent_filter(input : Treatmentinput) -> Treatmentinput:
     value = input.value.lower()
 
-    keywords = ['read', 'create', 'delete', 'update', ' yes ', ' no ']
+    keywords = ['READ', 'CREATE', 'DELETE', 'UPDATE', ' Yes ', ' No ']
     for keyword in keywords:
-        if keyword in value:
+        if keyword.lower() in value:
             input.value = keyword
     return input
 
@@ -114,11 +132,28 @@ def extract_attribute(input : Treatmentinput) -> Treatmentinput:
         return input
 
 def find_filter(input : Treatmentinput) -> Treatmentinput:
-    options = input.processed_atts.keys()
-    answers = []
-    print(input.key)
-    for option in options:
-        if option in input.key:
-            answers.append(option)
-    input.value = ' '.join(answers)
+    new_answer = []
+    msg = input.user_input.lower()
+    keywords  = [' where ', ' when ', ' whenever ', ' since ', ' with ']
+    addition_marks = ['and', ',']
+    idx = -1
+    for k in keywords:
+        idx = msg.find(k)
+        if idx > -1:
+            idx = idx+len(k)
+            msg = msg[idx:]
+            tokens = token_classification_service(msg)
+            for t in tokens:
+                if t['entity'] == 'NOUN':
+                    if len(new_answer)>1:
+                        break
+                    new_answer.append(t['word'])
+                elif t['word'] not in addition_marks:
+                    new_answer.append(t['word'])
+                else:
+                    break
+            new_value = ' '.join(new_answer)
+            input.value = new_value   
+            break
+    
     return input

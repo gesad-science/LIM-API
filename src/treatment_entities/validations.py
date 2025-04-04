@@ -1,5 +1,6 @@
 from .entities import Treatmentinput
 from ..utils.services import token_classification_service
+from src.utils.utils import split_string
 
 # from entities import Promptvalidation, Treatmentinput
 
@@ -140,4 +141,19 @@ def in_msg_test(input : Treatmentinput) -> bool:
     message = ' ' + input.user_input.lower() + ' '
     if single_word.lower() in message:
         return True
+    split_msg = split_string(message)
+    if single_word.lower() in split_msg:
+        return True
     return False
+
+def ignoring_noun_test(input : Treatmentinput) -> bool:
+    tokens = token_classification_service(input.user_input)
+    value_word = input.value.split(' ')[0]
+
+    noun = False
+    for token in tokens:  
+        if token['word'].lower() == value_word.lower() and noun==True:
+            return False
+        if token['entity'] == 'NOUN':
+            noun=True
+    return True
